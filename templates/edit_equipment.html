@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать оборудование - Система проверки оборудования{% endblock %}
+
+{% block page_title %}Редактировать оборудование{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    Редактирование оборудования
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
+                                Название оборудования *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ equipment.name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="model" class="form-label">
+                                <i class="fas fa-cog me-1"></i>
+                                Модель
+                            </label>
+                            <input type="text" class="form-control" id="model" name="model" value="{{ equipment.model }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="serial_number" class="form-label">
+                                <i class="fas fa-barcode me-1"></i>
+                                Серийный номер
+                            </label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" value="{{ equipment.serial_number }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                Расположение
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" value="{{ equipment.location }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Примечания
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ equipment.notes }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-toggle-on me-1"></i>
+                                Статус
+                            </label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="active" {% if equipment.status == 'active' %}selected{% endif %}>Активно</option>
+                                <option value="maintenance" {% if equipment.status == 'maintenance' %}selected{% endif %}>Обслуживание</option>
+                                <option value="inactive" {% if equipment.status == 'inactive' %}selected{% endif %}>Неактивно</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="next_inspection" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                Следующая проверка
+                            </label>
+                            <input type="date" class="form-control" id="next_inspection" name="next_inspection" value="{{ equipment.next_inspection }}">
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('equipment_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

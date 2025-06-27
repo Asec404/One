@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Отчеты - Система проверки оборудования{% endblock %}
+
+{% block page_title %}Отчеты по проверкам{% endblock %}
+
+{% block page_actions %}
+<button class="btn btn-outline-success" onclick="exportToExcel()">
+    <i class="fas fa-file-excel me-2"></i>
+    Экспорт в Excel
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Фильтры -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Фильтры
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="statusFilter" class="form-label">Статус проверки</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Все статусы</option>
+                            <option value="passed">Пройдена</option>
+                            <option value="failed">Не пройдена</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="dateFrom" class="form-label">Дата с</label>
+                        <input type="date" class="form-control" id="dateFrom">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="dateTo" class="form-label">Дата по</label>
+                        <input type="date" class="form-control" id="dateTo">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button class="btn btn-primary" onclick="applyFilters()">
+                                <i class="fas fa-search me-1"></i>
+                                Применить
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times me-1"></i>
+                                Сбросить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success">{{ inspections|selectattr('result', 'equalto', 'passed')|list|length }}</h3>
+                        <p class="text-muted mb-0">Пройдено проверок</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-danger">{{ inspections|selectattr('result', 'equalto', 'failed')|list|length }}</h3>
+                        <p class="text-muted mb-0">Не пройдено проверок</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info">{{ inspections|length }}</h3>
+                        <p class="text-muted mb-0">Всего проверок</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-warning">
+                            {% set passed = inspections|selectattr('result', 'equalto', 'passed')|list|length %}
+                            {% set total = inspections|length %}
+                            {% if total > 0 %}
+                                {{ "%.1f"|format((passed / total) * 100) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                        <p class="text-muted mb-0">Процент успешности</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица проверок -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    История проверок
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if inspections %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="inspectionsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Дата проверки</th>
+                                    <th>Оборудование</th>
+                                    <th>Инспектор</th>
+                                    <th>Результат</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inspection in inspections %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ inspection.inspection_date|format_dt if inspection.inspection_date else 'Не указана' }}</strong><br>
+                                        <small class="text-muted">{{ inspection.inspection_date|format_dt('%H:%M') if inspection.inspection_date else '' }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ inspection.equipment.name if inspection.equipment else 'Неизвестно' }}</strong><br>
+                                        <small class="text-muted">{{ inspection.equipment.model if inspection.equipment and inspection.equipment.model else '' }}</small>
+                                    </td>
+                                    <td>
+                                        {{ inspection.inspector.name if inspection.inspector else 'Неизвестно' }}
+                                    </td>
+                                    <td>
+                                        {% if inspection.result == 'passed' %}
+                                            <span class="badge bg-success">Пройдена</span>
+                                        {% elif inspection.result == 'failed' %}
+                                            <span class="badge bg-danger">Не пройдена</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">В процессе</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if inspection.status == 'completed' %}
+                                            <span class="badge bg-success">Завершена</span>
+                                        {% elif inspection.status == 'pending' %}
+                                            <span class="badge bg-warning">Ожидает</span>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ inspection.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                onclick="showInspectionDetails({{ inspection.id }})"
+                                                title="Подробности">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="printReport({{ inspection.id }})"
+                                                title="Печать отчета">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Нет данных о проверках</h4>
+                        <p class="text-muted">Проверки появятся здесь после их проведения</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для деталей проверки -->
+<div class="modal fade" id="inspectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали проверки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="inspectionModalBody">
+                <!-- Контент будет загружен динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" onclick="printCurrentReport()">
+                    <i class="fas fa-print me-1"></i>
+                    Печать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentInspectionId = null;
+
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+
+    const rows = document.querySelectorAll('#inspectionsTable tbody tr');
+    rows.forEach(row => {
+        let show = true;
+
+        // Фильтр по статусу
+        if (status) {
+            const resultCell = row.querySelector('td:nth-child(4)');
+            const result = resultCell.textContent.trim();
+            if (status === 'passed' && !result.includes('Пройдена')) show = false;
+            if (status === 'failed' && !result.includes('Не пройдена')) show = false;
+        }
+
+        // Фильтр по дате
+        if (show && (dateFrom || dateTo)) {
+            const dateCell = row.querySelector('td:nth-child(1) strong');
+            if (dateCell) {
+                const dateText = dateCell.textContent.trim();
+                // Преобразуем dd.mm.yyyy в yyyy-mm-dd для Date
+                const [d, m, y] = dateText.split('.');
+                const rowDate = new Date(`${y}-${m}-${d}`);
+                if (dateFrom) {
+                    const [fromY, fromM, fromD] = dateFrom.split('-');
+                    const fromDate = new Date(`${fromY}-${fromM}-${fromD}`);
+                    if (rowDate < fromDate) show = false;
+                }
+                if (dateTo) {
+                    const [toY, toM, toD] = dateTo.split('-');
+                    const toDate = new Date(`${toY}-${toM}-${toD}`);
+                    if (rowDate > toDate) show = false;
+                }
+            }
+        }
+
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    
+    const rows = document.querySelectorAll('#inspectionsTable tbody tr');
+    rows.forEach(row => row.style.display = '');
+}
+
+function showInspectionDetails(inspectionId) {
+    currentInspectionId = inspectionId;
+    const modal = new bootstrap.Modal(document.getElementById('inspectionModal'));
+    document.getElementById('inspectionModalBody').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    `;
+    modal.show();
+    
+    // Имитация загрузки данных
+    setTimeout(() => {
+        document.getElementById('inspectionModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Основная информация</h6>
+                    <p><strong>ID проверки:</strong> ${inspectionId}</p>
+                    <p><strong>Дата:</strong> ${new Date().toLocaleDateString()}</p>
+                    <p><strong>Результат:</strong> Пройдена</p>
+                    <p><strong>Статус:</strong> Завершена</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Чек-лист</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-1"></i>Визуальный осмотр</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Проверка электропитания</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Устройства безопасности</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h6>Примечания</h6>
+                <p class="text-muted">Оборудование работает в штатном режиме. Все системы функционируют нормально.</p>
+            </div>
+        `;
+    }, 1000);
+}
+
+function printReport(inspectionId) {
+    // Здесь можно добавить генерацию PDF или печать
+    window.open(`/print_report/${inspectionId}`, '_blank');
+}
+
+function printCurrentReport() {
+    if (currentInspectionId) {
+        printReport(currentInspectionId);
+    }
+}
+
+function exportToExcel() {
+    // Здесь можно добавить экспорт в Excel
+    alert('Функция экспорта в Excel будет добавлена позже');
+}
+
+// Автоматическое применение фильтров при изменении
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = ['statusFilter', 'dateFrom', 'dateTo'];
+    filterInputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', applyFilters);
+        }
+    });
+});
+</script>
+{% endblock %} 

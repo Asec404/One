@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить оборудование - Система проверки оборудования{% endblock %}
+
+{% block page_title %}Добавить оборудование{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Новая единица оборудования
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
+                                Название оборудования *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="form-text">Укажите краткое название оборудования</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="model" class="form-label">
+                                <i class="fas fa-cog me-1"></i>
+                                Модель
+                            </label>
+                            <input type="text" class="form-control" id="model" name="model">
+                            <div class="form-text">Модель или тип оборудования</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="serial_number" class="form-label">
+                                <i class="fas fa-barcode me-1"></i>
+                                Серийный номер
+                            </label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number">
+                            <div class="form-text">Уникальный серийный номер</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                Расположение
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location">
+                            <div class="form-text">Место установки оборудования</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Примечания
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Дополнительная информация об оборудовании..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-toggle-on me-1"></i>
+                                Статус
+                            </label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="active">Активно</option>
+                                <option value="maintenance">Обслуживание</option>
+                                <option value="inactive">Неактивно</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="next_inspection" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                Следующая проверка
+                            </label>
+                            <input type="date" class="form-control" id="next_inspection" name="next_inspection">
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('equipment_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Сохранить оборудование
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Подсказки -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Подсказки по заполнению
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Обязательные поля:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Название оборудования</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Рекомендуемые поля:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-info text-info me-2"></i>Серийный номер</li>
+                            <li><i class="fas fa-info text-info me-2"></i>Расположение</li>
+                            <li><i class="fas fa-info text-info me-2"></i>Дата следующей проверки</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Автоматическое заполнение даты следующей проверки (через 30 дней)
+document.addEventListener('DOMContentLoaded', function() {
+    const nextInspectionField = document.getElementById('next_inspection');
+    if (nextInspectionField && !nextInspectionField.value) {
+        const today = new Date();
+        const nextMonth = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+        nextInspectionField.value = nextMonth.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Панель управления - Система проверки оборудования{% endblock %}
+
+{% block page_title %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Статистика -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-white-50 text-uppercase mb-1">
+                            Всего оборудования
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-white">{{ equipment_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cogs fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-white-50 text-uppercase mb-1">
+                            Ожидают проверки
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-white">{{ pending_inspections }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-white-50 text-uppercase mb-1">
+                            Просрочены
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-white">{{ overdue_inspections }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-white-50 text-uppercase mb-1">
+                            Проверено сегодня
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-white">
+                            {{ recent_inspections|length if recent_inspections else 0 }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Быстрые действия -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Быстрые действия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('add_equipment') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Добавить оборудование
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('equipment_list') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-list me-2"></i>
+                            Список оборудования
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Отчеты
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <button class="btn btn-outline-warning w-100" onclick="showPendingInspections()">
+                            <i class="fas fa-clock me-2"></i>
+                            Ожидающие проверки
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние проверки -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Последние проверки
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_inspections %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Оборудование</th>
+                                    <th>Результат</th>
+                                    <th>Дата</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inspection in recent_inspections %}
+                                <tr>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ inspection.equipment.name if inspection.equipment else 'Неизвестно' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if inspection.result == 'passed' %}
+                                            <span class="badge bg-success">Пройдена</span>
+                                        {% elif inspection.result == 'failed' %}
+                                            <span class="badge bg-danger">Не пройдена</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">В процессе</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ inspection.inspection_date|format_dt if inspection.inspection_date else 'Не указана' }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Нет данных о проверках</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Уведомления -->
+{% if overdue_inspections > 0 %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Внимание!</strong> У вас {{ overdue_inspections }} проверок просрочено. 
+            <a href="{{ url_for('equipment_list') }}" class="alert-link">Просмотреть список оборудования</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function showPendingInspections() {
+    // Здесь можно добавить модальное окно или переход к списку ожидающих проверок
+    window.location.href = "{{ url_for('equipment_list') }}";
+}
+</script>
+{% endblock %} 

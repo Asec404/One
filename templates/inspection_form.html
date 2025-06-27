@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Проверка оборудования - Система проверки оборудования{% endblock %}
+
+{% block page_title %}Проверка оборудования{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Проверка: {{ equipment.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Информация об оборудовании -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle me-2"></i>Информация об оборудовании</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Модель:</strong></td>
+                                <td>{{ equipment.model or 'Не указана' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Серийный номер:</strong></td>
+                                <td><code>{{ equipment.serial_number or 'Не указан' }}</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Расположение:</strong></td>
+                                <td>{{ equipment.location or 'Не указано' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Статус:</strong></td>
+                                <td>
+                                    {% if equipment.status == 'active' %}
+                                        <span class="badge bg-success">Активно</span>
+                                    {% elif equipment.status == 'maintenance' %}
+                                        <span class="badge bg-warning">Обслуживание</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ equipment.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-history me-2"></i>История проверок</h6>
+                        {% if equipment.last_inspection %}
+                            <p><strong>Последняя проверка:</strong><br>
+                            <small class="text-muted">{{ equipment.last_inspection|format_dt('%d.%m.%Y %H:%M') }}</small></p>
+                        {% else %}
+                            <p class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Оборудование не проверялось</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('submit_inspection') }}">
+                    <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
+                    
+                    <!-- Чек-лист проверки -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-list-check me-2"></i>Чек-лист проверки</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check1" name="checklist[]" value="visual_inspection">
+                                    <label class="form-check-label" for="check1">
+                                        Визуальный осмотр оборудования
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check2" name="checklist[]" value="power_supply">
+                                    <label class="form-check-label" for="check2">
+                                        Проверка электропитания
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check3" name="checklist[]" value="safety_devices">
+                                    <label class="form-check-label" for="check3">
+                                        Проверка устройств безопасности
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check4" name="checklist[]" value="calibration">
+                                    <label class="form-check-label" for="check4">
+                                        Проверка калибровки
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check5" name="checklist[]" value="documentation">
+                                    <label class="form-check-label" for="check5">
+                                        Проверка документации
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="check6" name="checklist[]" value="cleanliness">
+                                    <label class="form-check-label" for="check6">
+                                        Проверка чистоты и порядка
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Результат проверки -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-clipboard-list me-2"></i>Результат проверки</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="result" id="result_passed" value="passed" required>
+                                    <label class="form-check-label text-success" for="result_passed">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Проверка пройдена
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="result" id="result_failed" value="failed" required>
+                                    <label class="form-check-label text-danger" for="result_failed">
+                                        <i class="fas fa-times-circle me-1"></i>
+                                        Проверка не пройдена
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Примечания -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-2"></i>
+                            Примечания к проверке
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                  placeholder="Опишите результаты проверки, обнаруженные проблемы, рекомендации..."></textarea>
+                    </div>
+
+                    <!-- Дополнительные параметры -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="temperature" class="form-label">
+                                <i class="fas fa-thermometer-half me-1"></i>
+                                Температура (°C)
+                            </label>
+                            <input type="number" class="form-control" id="temperature" name="temperature" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="humidity" class="form-label">
+                                <i class="fas fa-tint me-1"></i>
+                                Влажность (%)
+                            </label>
+                            <input type="number" class="form-control" id="humidity" name="humidity" min="0" max="100">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('equipment_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Завершить проверку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель с подсказками -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Подсказки по проверке
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Визуальный осмотр:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-1"></i>Проверить внешний вид</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Отсутствие повреждений</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Состояние корпуса</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Электропитание:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-1"></i>Проверить подключение</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Стабильность напряжения</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Состояние кабелей</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Безопасность:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-1"></i>Работа защитных устройств</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Состояние ограждений</li>
+                        <li><i class="fas fa-check text-success me-1"></i>Наличие предупреждений</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Быстрые действия
+                </h6>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="selectAllChecks()">
+                    <i class="fas fa-check-double me-1"></i>
+                    Выбрать все пункты
+                </button>
+                <button class="btn btn-outline-secondary btn-sm w-100 mb-2" onclick="clearAllChecks()">
+                    <i class="fas fa-times me-1"></i>
+                    Снять все отметки
+                </button>
+                <button class="btn btn-outline-success btn-sm w-100" onclick="setPassedResult()">
+                    <i class="fas fa-check me-1"></i>
+                    Установить "Пройдена"
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Функции для быстрых действий
+function selectAllChecks() {
+    const checkboxes = document.querySelectorAll('input[name="checklist[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    console.log('Все чекбоксы выбраны');
+}
+
+function clearAllChecks() {
+    const checkboxes = document.querySelectorAll('input[name="checklist[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    console.log('Все чекбоксы сняты');
+}
+
+function setPassedResult() {
+    const passedRadio = document.getElementById('result_passed');
+    if (passedRadio) {
+        passedRadio.checked = true;
+        console.log('Результат установлен: Пройдена');
+    } else {
+        console.error('Элемент result_passed не найден');
+    }
+}
+
+// Автоматическое сохранение чек-листа в localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="checklist[]"]');
+    const equipmentId = '{{ equipment.id }}';
+    
+    console.log('Загружено чекбоксов:', checkboxes.length);
+    console.log('ID оборудования:', equipmentId);
+    
+    // Загружаем сохраненные данные
+    const savedData = localStorage.getItem(`inspection_${equipmentId}`);
+    if (savedData) {
+        try {
+            const data = JSON.parse(savedData);
+            if (data.checks) {
+                data.checks.forEach(check => {
+                    const checkbox = document.querySelector(`input[value="${check}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            if (data.notes) {
+                const notesField = document.getElementById('notes');
+                if (notesField) notesField.value = data.notes;
+            }
+            console.log('Данные восстановлены из localStorage');
+        } catch (e) {
+            console.error('Ошибка при восстановлении данных:', e);
+        }
+    }
+    
+    // Сохраняем изменения
+    function saveProgress() {
+        const checks = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        const notesField = document.getElementById('notes');
+        const notes = notesField ? notesField.value : '';
+        
+        localStorage.setItem(`inspection_${equipmentId}`, JSON.stringify({
+            checks: checks,
+            notes: notes,
+            timestamp: new Date().toISOString()
+        }));
+        console.log('Прогресс сохранен');
+    }
+    
+    // Добавляем обработчики событий
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', saveProgress);
+    });
+    
+    const notesField = document.getElementById('notes');
+    if (notesField) {
+        notesField.addEventListener('input', saveProgress);
+    }
+    
+    // Добавляем обработчики для кнопок быстрых действий
+    const selectAllBtn = document.querySelector('button[onclick="selectAllChecks()"]');
+    const clearAllBtn = document.querySelector('button[onclick="clearAllChecks()"]');
+    const setPassedBtn = document.querySelector('button[onclick="setPassedResult()"]');
+    
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectAllChecks();
+            saveProgress();
+        });
+    }
+    
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearAllChecks();
+            saveProgress();
+        });
+    }
+    
+    if (setPassedBtn) {
+        setPassedBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            setPassedResult();
+        });
+    }
+    
+    console.log('Скрипт быстрых действий загружен');
+});
+</script>
+{% endblock %} 
