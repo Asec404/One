@@ -246,18 +246,18 @@ def edit_equipment(equipment_id):
     return render_template('edit_equipment.html', equipment=equipment)
 
     app.run(debug=False, host='0.0.0.0', port=port) 
- def force_admin():
-       data = load_data()
-       if not any(u['username'] == 'admin' for u in data['users']):
-           admin = {
-               'id': str(uuid.uuid4()),
-               'username': 'admin',
-               'password': 'admin123',
-               'name': 'Администратор',
-               'role': 'admin'
-           }
-           data['users'].append(admin)
-           save_data(data)
+def force_admin():
+    data = load_data()
+    if not any(u['username'] == 'admin' for u in data['users']):
+        admin = {
+            'id': str(uuid.uuid4()),
+            'username': 'admin',
+            'password': 'admin123',
+            'name': 'Администратор',
+            'role': 'admin'
+        }
+        data['users'].append(admin)
+        save_data(data)
 
    if __name__ == '__main__':
        force_admin()
