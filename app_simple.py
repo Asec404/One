@@ -245,11 +245,6 @@ def edit_equipment(equipment_id):
         return redirect(url_for('equipment_list'))
     return render_template('edit_equipment.html', equipment=equipment)
 
-if __name__ == '__main__':
-    init_data()
-    # Поддержка переменных окружения для Render
-    import os
-    port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port) 
  def force_admin():
        data = load_data()
